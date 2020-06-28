@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+    <script src='../../js/d3.v4.min.js'></script>
+    <style>
+        @font-face {
+            font-family: 'got';
+            src: url('../../meta/game-of-thrones/Game of Thrones.ttf');
+        }
+        
+        .title {
+            text-align: center;
+            font-family: "got";
+            font-size: 200%;
+            z-index: 25;
+        }
+        
+        #container {
+            position: relative;
+            overflow: scroll;
+            overflow-y: hidden;
+            z-index: 50;
+        }
+        
+        .deaths {
+            text-align: center;
+            vertical-align: middle;
+            /* top: 25%;
+            left: 25%;*/
+        }
+        
+        #container::-webkit-scrollbar {
+            display: none;
+        }
+        
+        #sticky {
+            position: absolute;
+            top: 100;
+            z-index: 100;
+            font-family: "got";
+        }
+    </style>
+</head>
+
+<body>
+    <div class="title">
+        <p>Game of Thrones</p>
+    </div>
+    <div id="sticky">
+        <input type="checkbox" class="deaths">
+        <label for="deaths">Spoilers</label>
+
+    </div>
+
+    <div id="container"> </div>
+
+
+
+    <script>
+        var margin = {
+                top: 10,
+                right: 30,
+                bottom: 50,
+                left: 60
+            },
+            width = (document.body.clientWidth * 2) - margin.left - margin.right,
+            height = 900 - margin.top - margin.bottom,
+            width2 = 500 - margin.left - margin.right,
+            height2 = 100 - margin.top - margin.bottom;
+        console.log(document.body.clientWidth * 2)
+        console.log(width)
+
+        /* var width = document.body.clientWidth * 2,
+             width2 = 500,
+             height = 500,
+             height2 = 50;*/
+        //console.log(width)
+
+
+
+        var svg = d3.select("#container")
+            .append("svg")
+            .attr("width", width + margin.left + margin.right)
+            .attr("height", height + margin.top + margin.bottom)
+            .append("g")
+            .attr("transform",
+                "translate(" + margin.left + "," + margin.top + ")");
+
+
+        var svg2 = d3.select("#sticky")
+            .style("top", ((height / 2) + 200) + "px")
+            .append("svg")
+            .attr("width", width + margin.left + margin.right)
+            .attr("height", height2 + margin.top + margin.bottom)
+            .append("g")
+            .attr("transform",
+                "translate(" + margin.left + "," + margin.top + ")");
+
+        var tooltip = d3
+            .select("#container")
+            .append("div")
+            .style("z-index", 100)
+            .style("opacity", 0)
+            .attr("class", "tooltip")
+            .style("position", "absolute")
+            .style("background-color", "white")
+            .style("border", "solid")
+            .style("border-width", "2px")
+            .style("border-radius", "5px")
+            .style("padding", "5px");
+
+        var title_tooltip = d3
+            .select("#container")
+            .append("div")
+            .style("z-index", 50)
+            .style("opacity", 0)
+            .style("position", "absolute")
+            .attr("class", "tooltip")
+            .style("background-color", "white")
+            .style("font-family", "got")
+
+
+        d3.json("../../data/got/data_out/got.json", function(datagot) {
+            /*console.log(d3.max(datagot, function(a) {
+                return a.nbcharacters;
+            }));*/
+            console.log(datagot);
+            var xscale = d3.scaleLinear()
+                //.domain(["s1", "s2", "s3", "s4", "s5", "s6", "s7", "s8"])
+                .domain([0, d3.max(datagot, function(a) {
+                    return a.episode;
+                })])
+                .range([0, width]),
+
+                xscale_aux = d3.scaleBand()
+                .domain([1, 2, 3, 4, 5, 6, 7, 8])
+                .range([0, width])
+                .padding(0.05),
+
+                xscale2 = d3.scaleBand()
+                .domain([1, 2, 3, 4, 5, 6, 7, 8])
+
+            //.domain(["s1", "s2", "s3", "s4", "s5", "s6", "s7", "s8"])
+            .range([0, width2])
+                .padding(0.05);
+
+            console.log(datagot.map(function(d) {
+                return d.seasonNum;
+            }));
+
+            /*  d3.max(function(data) {
+                              return d3.max(data.value)
+                          })*/
+            /*How to do the max wronlgy*/
+
+            var yscale = d3.scaleLinear()
+                .domain([0, d3.max(datagot, function(a) {
+                    return a.nbcharacters;
+                })])
+                .range([0, height / 2]),
+
+                yscale2 = d3.scaleLinear()
+                .domain([0, d3.max(datagot, function(a) {
+                    return a.value;
+                })])
+                .range([height2, 0]);
+
+            var //x_axis = d3.axisBottom(xscale),
+                x_axis2 = d3.axisBottom(xscale2);
+
+            var //y_axis = d3.axisLeft(yscale),
+                y_axis2 = d3.axisLeft(yscale2);
+
+            //svg.append("g")
+            //.attr("transform", "translate(0, 0)")
+            //.call(y_axis);
+
+            //  console.log(((height / 2) + 100));
+
+            var xAxisTranslate = height / 2;
+
+            // svg.append("g")
+            //    .attr("transform", "translate(0, " + xAxisTranslate + ")")
+            //   .call(x_axis)
+
+            svg2.append("g")
+                .attr("transform", "translate(0, " + (height2) + ")")
+                .call(x_axis2)
+                // .style("font-family", "got");
+
+            //svg2.append("g")
+            //.attr("transform", "translate(50,10)")
+            //    .call(y_axis2);
+
+            svg.append("g")
+                .selectAll("dot")
+                .data(datagot).enter()
+                .append("circle")
+                .attr("id", function(d) {
+                    return "circle" + d.death;
+                })
+
+            .attr("r", function(d) {
+                    //   return 200 / d;
+
+                    return d.time_in_episode;
+                })
+                .attr("cx", function(d) {
+                    //console.log(d.season);
+                    //return xscale(d.season);
+                    return xscale(d.episode);
+                })
+                .attr("cy", function(d) {
+                    return yscale(d.position);
+
+
+                })
+                .attr("fill", function(d) {
+                    return d.colour
+                }).
+            on("mouseover", handleMouseOver)
+                .on("mouseout", handleMouseOut);
+
+
+            svg2.append("g")
+                .selectAll("rect")
+                .data(datagot)
+                .enter()
+                .append("rect")
+                .attr("width", xscale2.bandwidth())
+                .attr("height", height2)
+                .attr("fill", function(d) {
+                    return "lightblue"
+                        // return d.seasonNum
+                })
+                .attr("opacity", 0.5)
+                .attr("x", function(d) {
+                    return xscale2(d.seasonNum)
+                })
+                .on("mouseover", function(d) {
+                    console.log(xscale_aux(d.seasonNum))
+
+                    d3.select(this).attr("fill", "yellow")
+                })
+                .on("mouseout", function(d) {
+                    d3.select(this).attr("fill", "lightblue")
+                })
+
+            .on("click", function(d) {
+                d3.select("#container").select("svg").transition()
+                    .duration(750)
+                    .attr("transform", "translate(-" + xscale_aux(d.seasonNum) + ",0)"); //problem
+
+
+
+            })
+            svg2.append("text")
+                .attr("transform",
+                    "translate(" + (width2 / 2) + " ," +
+                    (height2 + margin.top + 40) + ")")
+                .style("text-anchor", "middle")
+                .text("Season");
+
+            console.log(datagot.filter(function(d) {
+                return d.death == 0;
+            }));
+
+
+            // Handle Mouse Over
+
+            function handleMouseOver(d) {
+
+                title_tooltip
+                    .style("opacity", 1)
+                    .html(d.episodeTitle)
+                    .style("left", d3.mouse(this)[0] + "px")
+                    .style("top", (height / 2 + margin.bottom) + "px");
+
+                tooltip
+                    .style("opacity", 1)
+                    .html("<b>" + d.name + "</b><br> Time in episode: " + d.time_in_episode + " min")
+                    .style("left", (d3.mouse(this)[0] + 70) + "px")
+                    .style("top", (d3.mouse(this)[1]) + "px")
+
+                d3.selectAll("circle").transition()
+                    .duration(200).attr("opacity", 0.2);
+
+                d3.select(this).transition()
+                    .duration(200).attr("opacity", 1)
+                    // .attr("fill", "blue");
+            };
+
+
+            // Handle Mouse Out
+            function handleMouseOut(d) {
+                title_tooltip
+                    .style("opacity", 0);
+                tooltip
+                    .style("opacity", 0);
+
+                d3.select(this).transition()
+                    .duration(200)
+                    .attr("fill", function(d) {
+                        return d.colour
+                    });
+
+                d3.selectAll("circle").transition()
+                    .duration(200).attr("opacity", 1)
+            };
+
+            //update
+            function update() {
+                var seles = d3.selectAll("#circle0")
+
+                if (d3.select(this).property("checked")) {
+                    // console.log("cheche")
+                    seles.transition()
+                        .duration(200).remove() //style("opacity", 0);
+                } else {
+                    svg.append("g")
+                        .selectAll("dot")
+                        .data(datagot).enter()
+                        .append("circle")
+                        .attr("id", function(d) {
+                            return "circle" + d.death;
+                        })
+
+                    .attr("r", function(d) {
+                            //   return 200 / d;
+                            return d.time_in_episode;
+                        })
+                        .attr("cx", function(d) {
+                            //console.log(d.season);
+                            //return xscale(d.season);
+                            return xscale(d.episode);
+                        })
+                        .attr("cy", function(d) {
+                            return yscale(d.position);
+                        })
+                        .attr("fill", function(d) {
+                            return d.colour
+                        })
+                        .on("mouseover", handleMouseOver)
+                        .on("mouseout", handleMouseOut);
+                };
+            };
+            d3.select(".deaths").on("change", update)
+
+        });
+    </script>
+</body>
+
+</html>
