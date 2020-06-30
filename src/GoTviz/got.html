@@ -3,45 +3,9 @@
 
 <head>
 
-    <script src='../../js/d3.v4.min.js'></script>
-    <style>
-        @font-face {
-            font-family: 'got';
-            src: url('../../meta/game-of-thrones/Game of Thrones.ttf');
-        }
-        
-        .title {
-            text-align: center;
-            font-family: "got";
-            font-size: 200%;
-            z-index: 25;
-        }
-        
-        #container {
-            position: relative;
-            overflow: scroll;
-            overflow-y: hidden;
-            z-index: 50;
-        }
-        
-        .deaths {
-            text-align: center;
-            vertical-align: middle;
-            /* top: 25%;
-            left: 25%;*/
-        }
-        
-        #container::-webkit-scrollbar {
-            display: none;
-        }
-        
-        #sticky {
-            position: absolute;
-            top: 100;
-            z-index: 100;
-            font-family: "got";
-        }
-    </style>
+    <script src='js/d3.v4.min.js'></script>
+    <link rel="stylesheet" type="text/css" href="style/style.css">
+
 </head>
 
 <body>
@@ -60,23 +24,19 @@
 
     <script>
         var margin = {
-                top: 10,
-                right: 30,
+                top: 40,
+                right: 40,
                 bottom: 50,
                 left: 60
             },
             width = (document.body.clientWidth * 2) - margin.left - margin.right,
-            height = 900 - margin.top - margin.bottom,
+            height = 1000 - margin.top - margin.bottom,
             width2 = 500 - margin.left - margin.right,
-            height2 = 100 - margin.top - margin.bottom;
+            height2 = 125 - margin.top - margin.bottom;
         console.log(document.body.clientWidth * 2)
         console.log(width)
 
-        /* var width = document.body.clientWidth * 2,
-             width2 = 500,
-             height = 500,
-             height2 = 50;*/
-        //console.log(width)
+
 
 
 
@@ -104,6 +64,7 @@
             .style("z-index", 100)
             .style("opacity", 0)
             .attr("class", "tooltip")
+            .attr("id", "main_tooltip")
             .style("position", "absolute")
             .style("background-color", "white")
             .style("border", "solid")
@@ -201,6 +162,7 @@
                 .attr("id", function(d) {
                     return "circle" + d.death;
                 })
+                .attr("offset", 0)
 
             .attr("r", function(d) {
                     //   return 200 / d;
@@ -223,7 +185,6 @@
             on("mouseover", handleMouseOver)
                 .on("mouseout", handleMouseOut);
 
-
             svg2.append("g")
                 .selectAll("rect")
                 .data(datagot)
@@ -243,6 +204,7 @@
                     console.log(xscale_aux(d.seasonNum))
 
                     d3.select(this).attr("fill", "yellow")
+                        .style("cursor", "pointer")
                 })
                 .on("mouseout", function(d) {
                     d3.select(this).attr("fill", "lightblue")
@@ -251,39 +213,43 @@
             .on("click", function(d) {
                 d3.select("#container").select("svg").transition()
                     .duration(750)
-                    .attr("transform", "translate(-" + xscale_aux(d.seasonNum) + ",0)"); //problem
+                    .attr("transform", "translate(-" + xscale_aux(d.seasonNum) + ",0)");
+                var offset = xscale_aux(d.seasonNum)
 
+                d3.selectAll("circle").attr("offset", offset)
+                    /*console.log(offset)
+                    console.log(d3.mouse(this)[0])
+                    console.log(d3.mouse(this)[0] - xscale_aux(d.seasonNum))*/
 
 
             })
             svg2.append("text")
                 .attr("transform",
                     "translate(" + (width2 / 2) + " ," +
-                    (height2 + margin.top + 40) + ")")
+                    (height2 + margin.top) + ")")
                 .style("text-anchor", "middle")
                 .text("Season");
 
-            console.log(datagot.filter(function(d) {
-                return d.death == 0;
-            }));
+
 
 
             // Handle Mouse Over
 
             function handleMouseOver(d) {
-
+                //console.log(d3.select(this).attr("offset"))
                 title_tooltip
                     .style("opacity", 1)
                     .html(d.episodeTitle)
-                    .style("left", d3.mouse(this)[0] + "px")
+                    .style("left", d3.mouse(this)[0] - d3.select(this).attr("offset") + "px")
                     .style("top", (height / 2 + margin.bottom) + "px");
+
 
                 tooltip
                     .style("opacity", 1)
-                    .html("<b>" + d.name + "</b><br> Time in episode: " + d.time_in_episode + " min")
-                    .style("left", (d3.mouse(this)[0] + 70) + "px")
+                    .html("<b>" + d.name + "</b><br> Time in episode: " +
+                        d.time_in_episode + " min<br> Family: " + "<strong style = 'color:" + d.colour + "'>" + d.family + " </strong>")
+                    .style("left", (d3.mouse(this)[0] + 70 - d3.select(this).attr("offset")) + "px")
                     .style("top", (d3.mouse(this)[1]) + "px")
-
                 d3.selectAll("circle").transition()
                     .duration(200).attr("opacity", 0.2);
 
