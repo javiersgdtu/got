@@ -12,14 +12,13 @@
     <div class="title">
         <p>Game of Thrones</p>
     </div>
-    <div id="sticky">
+    <div id="sticky" style="left:80px;">
         <input type="checkbox" class="deaths">
         <label for="deaths">Spoilers</label>
 
     </div>
 
     <div id="container"> </div>
-
 
 
     <script>
@@ -30,19 +29,15 @@
                 left: 60
             },
             width = (document.body.clientWidth * 2) - margin.left - margin.right,
-            height = 1000 - margin.top - margin.bottom,
-            width2 = 500 - margin.left - margin.right,
-            height2 = 125 - margin.top - margin.bottom;
-        console.log(document.body.clientWidth * 2)
-        console.log(width)
-
-
-
-
+            height = (window.innerHeight * 1.5) - margin.top - margin.bottom,
+            widthsticky = document.body.clientWidth - margin.left - margin.right,
+            widthmenu = 500 - margin.left - margin.right,
+            heightmenu = 125 - margin.top - margin.bottom;
+        console.log(window.innerHeight)
 
         var svg = d3.select("#container")
             .append("svg")
-            .attr("width", width + margin.left + margin.right)
+            .attr("width", width + margin.left + margin.right + 50) //We add some extra spacing
             .attr("height", height + margin.top + margin.bottom)
             .append("g")
             .attr("transform",
@@ -52,11 +47,11 @@
         var svg2 = d3.select("#sticky")
             .style("top", ((height / 2) + 200) + "px")
             .append("svg")
-            .attr("width", width + margin.left + margin.right)
-            .attr("height", height2 + margin.top + margin.bottom)
+            .attr("width", widthsticky)
+            .attr("height", heightmenu + margin.top + margin.bottom)
             .append("g")
-            .attr("transform",
-                "translate(" + margin.left + "," + margin.top + ")");
+            /* .attr("transform",
+                 "translate(" + margin.left + ",0)");*/
 
         var tooltip = d3
             .select("#container")
@@ -83,13 +78,10 @@
             .style("font-family", "got")
 
 
-        d3.json("../../data/got/data_out/got.json", function(datagot) {
-            /*console.log(d3.max(datagot, function(a) {
-                return a.nbcharacters;
-            }));*/
-            console.log(datagot);
+        d3.json("../../data/data_out/got.json", function(datagot) {
+
+            //console.log(datagot);
             var xscale = d3.scaleLinear()
-                //.domain(["s1", "s2", "s3", "s4", "s5", "s6", "s7", "s8"])
                 .domain([0, d3.max(datagot, function(a) {
                     return a.episode;
                 })])
@@ -100,60 +92,24 @@
                 .range([0, width])
                 .padding(0.05),
 
-                xscale2 = d3.scaleBand()
+                xscalemenu = d3.scaleBand()
                 .domain([1, 2, 3, 4, 5, 6, 7, 8])
-
-            //.domain(["s1", "s2", "s3", "s4", "s5", "s6", "s7", "s8"])
-            .range([0, width2])
+                .range([0, widthmenu])
                 .padding(0.05);
-
-            console.log(datagot.map(function(d) {
-                return d.seasonNum;
-            }));
-
-            /*  d3.max(function(data) {
-                              return d3.max(data.value)
-                          })*/
-            /*How to do the max wronlgy*/
 
             var yscale = d3.scaleLinear()
                 .domain([0, d3.max(datagot, function(a) {
                     return a.nbcharacters;
                 })])
-                .range([0, height / 2]),
+                .range([0, height / 2]);
 
-                yscale2 = d3.scaleLinear()
-                .domain([0, d3.max(datagot, function(a) {
-                    return a.value;
-                })])
-                .range([height2, 0]);
 
-            var //x_axis = d3.axisBottom(xscale),
-                x_axis2 = d3.axisBottom(xscale2);
-
-            var //y_axis = d3.axisLeft(yscale),
-                y_axis2 = d3.axisLeft(yscale2);
-
-            //svg.append("g")
-            //.attr("transform", "translate(0, 0)")
-            //.call(y_axis);
-
-            //  console.log(((height / 2) + 100));
-
-            var xAxisTranslate = height / 2;
-
-            // svg.append("g")
-            //    .attr("transform", "translate(0, " + xAxisTranslate + ")")
-            //   .call(x_axis)
+            var x_axismenu = d3.axisBottom(xscalemenu);
 
             svg2.append("g")
-                .attr("transform", "translate(0, " + (height2) + ")")
-                .call(x_axis2)
+                .attr("transform", "translate(0, " + (heightmenu) + ")")
+                .call(x_axismenu)
                 // .style("font-family", "got");
-
-            //svg2.append("g")
-            //.attr("transform", "translate(50,10)")
-            //    .call(y_axis2);
 
             svg.append("g")
                 .selectAll("dot")
@@ -165,13 +121,11 @@
                 .attr("offset", 0)
 
             .attr("r", function(d) {
-                    //   return 200 / d;
 
                     return d.time_in_episode;
                 })
                 .attr("cx", function(d) {
                     //console.log(d.season);
-                    //return xscale(d.season);
                     return xscale(d.episode);
                 })
                 .attr("cy", function(d) {
@@ -181,8 +135,8 @@
                 })
                 .attr("fill", function(d) {
                     return d.colour
-                }).
-            on("mouseover", handleMouseOver)
+                })
+                .on("mouseover", handleMouseOver)
                 .on("mouseout", handleMouseOut);
 
             svg2.append("g")
@@ -190,27 +144,33 @@
                 .data(datagot)
                 .enter()
                 .append("rect")
-                .attr("width", xscale2.bandwidth())
-                .attr("height", height2)
+                .attr("width", xscalemenu.bandwidth())
+                .attr("height", heightmenu)
                 .attr("fill", function(d) {
                     return "lightblue"
-                        // return d.seasonNum
                 })
                 .attr("opacity", 0.5)
                 .attr("x", function(d) {
-                    return xscale2(d.seasonNum)
+                    return xscalemenu(d.seasonNum)
                 })
                 .on("mouseover", function(d) {
-                    console.log(xscale_aux(d.seasonNum))
+                    var colour = d3.select(this).attr("fill") != "#ffb3b3" ? "yellow" : "#ffb3b3"
 
-                    d3.select(this).attr("fill", "yellow")
+                    d3.select(this).attr("fill", colour)
                         .style("cursor", "pointer")
                 })
                 .on("mouseout", function(d) {
-                    d3.select(this).attr("fill", "lightblue")
+                    var colour = d3.select(this).attr("fill") != "#ffb3b3" ? "lightblue" : "#ffb3b3"
+                    d3.select(this).attr("fill", colour)
                 })
 
             .on("click", function(d) {
+                d3.selectAll("rect")
+                    .attr("fill", "lightblue");
+                d3.select(this)
+                    .attr("fill", "#ffb3b3")
+                    .attr("clicked", 1);
+
                 d3.select("#container").select("svg").transition()
                     .duration(750)
                     .attr("transform", "translate(-" + xscale_aux(d.seasonNum) + ",0)");
@@ -225,16 +185,13 @@
             })
             svg2.append("text")
                 .attr("transform",
-                    "translate(" + (width2 / 2) + " ," +
-                    (height2 + margin.top) + ")")
+                    "translate(" + (widthmenu / 2) + " ," +
+                    (heightmenu + margin.top) + ")")
                 .style("text-anchor", "middle")
                 .text("Season");
 
 
-
-
             // Handle Mouse Over
-
             function handleMouseOver(d) {
                 //console.log(d3.select(this).attr("offset"))
                 title_tooltip
@@ -243,11 +200,11 @@
                     .style("left", d3.mouse(this)[0] - d3.select(this).attr("offset") + "px")
                     .style("top", (height / 2 + margin.bottom) + "px");
 
-
                 tooltip
                     .style("opacity", 1)
                     .html("<b>" + d.name + "</b><br> Time in episode: " +
-                        d.time_in_episode + " min<br> Family: " + "<strong style = 'color:" + d.colour + "'>" + d.family + " </strong>")
+                        d.time_in_episode + " min<br> Family: " + "<strong style = 'color:" + d.colour + "'>" +
+                        d.family + " </strong>")
                     .style("left", (d3.mouse(this)[0] + 70 - d3.select(this).attr("offset")) + "px")
                     .style("top", (d3.mouse(this)[1]) + "px")
                 d3.selectAll("circle").transition()
@@ -257,7 +214,6 @@
                     .duration(200).attr("opacity", 1)
                     // .attr("fill", "blue");
             };
-
 
             // Handle Mouse Out
             function handleMouseOut(d) {
@@ -294,7 +250,6 @@
                         })
 
                     .attr("r", function(d) {
-                            //   return 200 / d;
                             return d.time_in_episode;
                         })
                         .attr("cx", function(d) {
